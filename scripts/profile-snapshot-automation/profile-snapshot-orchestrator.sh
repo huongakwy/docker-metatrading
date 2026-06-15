@@ -39,7 +39,8 @@ REFERENCE_CONTAINER="${REFERENCE_CONTAINER:-}"
 ACCOUNTS_CSV="${ACCOUNTS_CSV:-}"
 
 # Project directory
-PROJECT_DIR="${PROJECT_DIR:-$(dirname "$(pwd)")}"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_DIR="$(cd "$SCRIPT_DIR/../.." && pwd)"
 
 # Show usage
 usage() {
@@ -443,6 +444,7 @@ do_deploy() {
             -v "$config_dir:/config" \
             -v "$logs_dir:/logs" \
             -v "$volume_name:/config/credentials" \
+            -v "$SCRIPT_DIR/start.sh:/Metatrader/start.sh:ro" \
             -e PUID=1000 \
             -e PGID=1002 \
             -e WINEPREFIX="/config/.wine" \

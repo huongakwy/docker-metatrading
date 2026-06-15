@@ -257,6 +257,17 @@ fix_permissions() {
     log_success "Permissions fixed"
 }
 
+# Disable MT5 LiveUpdate by making WebInstall folder read-only
+disable_live_update() {
+    local webinstall_dir="$MT5_WINE_USER_ROOT/AppData/Roaming/MetaQuotes/WebInstall"
+    log_info "Disabling MT5 LiveUpdate at $webinstall_dir..."
+    rm -rf "$webinstall_dir" 2>/dev/null || true
+    mkdir -p "$webinstall_dir"
+    # Make it read-only for the MT5 user to prevent downloading update packages
+    chmod 555 "$webinstall_dir" 2>/dev/null || true
+    log_success "MT5 LiveUpdate disabled"
+}
+
 # Main entrypoint
 main() {
     echo ""
@@ -304,6 +315,26 @@ main() {
 
     # Step 3: Inject credentials if volume is mounted
     inject_credentials "$terminal_id"
+    echo ""
+
+    # Step 3.5: Disable MT5 LiveUpdate
+    disable_live_update
+    echo ""
+
+
+    # Step 3.6: Copy startup.ini if available to MT5 install directory
+    # This ensures MT5 can find it relative to the executable
+    if [ -f "$CREDENTIALS_PATH/startup.ini" ]; then
+        log_info "Copying startup.ini from credentials volume to MT5 installation path..."
+        cp "$CREDENTIALS_PATH/startup.ini" "$MT5_INSTALL_PATH/startup.ini"
+        chown "$MT5_UID:$MT5_GID" "$MT5_INSTALL_PATH/startup.ini" 2>/dev/null || true
+        chmod 644 "$MT5_INSTALL_PATH/startup.ini" 2>/dev/null || true
+    elif [ -f "/config/startup.ini" ]; then
+        log_info "Copying startup.ini from config directory to MT5 installation path..."
+        cp "/config/startup.ini" "$MT5_INSTALL_PATH/startup.ini"
+        chown "$MT5_UID:$MT5_GID" "$MT5_INSTALL_PATH/startup.ini" 2>/dev/null || true
+        chmod 644 "$MT5_INSTALL_PATH/startup.ini" 2>/dev/null || true
+    fi
     echo ""
 
     # Step 4: Launch MT5 with startup.ini for auto-login
