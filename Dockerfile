@@ -7,8 +7,8 @@ FROM gmag11/metatrader5_vnc:1.0
 LABEL maintainer="MT5 Docker Team"
 LABEL description="MetaTrader 5 with automated EA attachment"
 
-# Copy MT5 installer
-COPY mt5setup.exe /tmp/mt5setup.exe
+# Download MT5 installer
+ADD https://download.mql5.com/cdn/web/metaquotes/software/mt5/mt5setup.exe /tmp/mt5setup.exe
 
 # Create user with correct UID/GID (1000:1002) instead of default 911
 RUN (groupdel abc 2>/dev/null || true) && \
