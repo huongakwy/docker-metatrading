@@ -257,8 +257,8 @@ fix_permissions() {
     chown -R "$MT5_UID:$MT5_GID" "$MT5_INSTALL_PATH/Profiles" 2>/dev/null || true
 
     # Fix entire /config/.wine to ensure Wine prefix is writable
-    # (critical when .wine is copied from reference container on host)
-    chown -R "$MT5_UID:$MT5_GID" "$MT5_WINE_USER_ROOT" 2>/dev/null || true
+    # (critical when .wine is copied from reference container on host or restored from backup)
+    chown -R "$MT5_UID:$MT5_GID" "$WINEPREFIX" 2>/dev/null || true
 
     log_success "Permissions fixed"
 }
@@ -274,6 +274,24 @@ disable_live_update() {
     log_success "MT5 LiveUpdate disabled"
 }
 
+# Restore Wine prefix from built-in backup if empty
+restore_wine_prefix() {
+    if [ ! -d "$WINEPREFIX" ] || [ ! -f "$MT5_EXE" ]; then
+        log_info "Wine prefix empty or MT5 not found at $MT5_EXE"
+        if [ -d "/opt/mt5-wine" ]; then
+            log_info "Restoring Wine prefix from built-in backup /opt/mt5-wine..."
+            mkdir -p "$WINEPREFIX"
+            # Copy backup to WINEPREFIX
+            cp -a /opt/mt5-wine/. "$WINEPREFIX/"
+            log_success "Wine prefix restored successfully from /opt/mt5-wine"
+        else
+            log_warning "No built-in Wine prefix backup found at /opt/mt5-wine"
+            return 1
+        fi
+    fi
+    return 0
+}
+
 # Main entrypoint
 main() {
     echo ""
@@ -285,6 +303,12 @@ main() {
 
     # Get MT5 user IDs first (this sets MT5_USER, MT5_UID, MT5_GID, MT5_WINE_USER_ROOT)
     get_mt5_user_ids
+
+    # Step 0: Restore Wine prefix if missing
+    if ! restore_wine_prefix; then
+        log_error "Failed to restore Wine prefix"
+        exit 1
+    fi
 
     log_info "Current User: $MT5_USER (UID: $MT5_UID, GID: $MT5_GID)"
     log_info "Wine User Root: $MT5_WINE_USER_ROOT"
