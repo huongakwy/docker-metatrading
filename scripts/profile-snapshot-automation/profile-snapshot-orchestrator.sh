@@ -396,7 +396,7 @@ do_deploy() {
                     done
                     
                     # Generate startup.ini for auto-login
-                    printf '[Common]\nLogin=%s\nPassword=%s\nServer=%s\n' \"\$LOGIN\" \"\$PASSWORD\" \"\$SERVER\" > /config/startup.ini
+                    printf '[Common]\nLogin=%s\nPassword=%s\nServer=%s\n\n[Charts]\nProfileLast=AutoBridge\n' \"\$LOGIN\" \"\$PASSWORD\" \"\$SERVER\" > /config/startup.ini
                     echo \"Generated startup.ini for auto-login\"
                 "
         else
@@ -405,7 +405,7 @@ do_deploy() {
             docker run --rm \
                 -v "$config_dir:/config" \
                 alpine sh -c "
-                    printf '[Common]\nLogin=0\nPassword=\nServer=\n' > /config/startup.ini
+                    printf '[Common]\nLogin=0\nPassword=\nServer=\n\n[Charts]\nProfileLast=AutoBridge\n' > /config/startup.ini
                     echo \"Created empty startup.ini\"
                 "
         fi

@@ -395,14 +395,14 @@ main() {
 
     # Use su-exec or gosu to switch to MT5 user (kasm-user or abc)
     if command -v su-exec >/dev/null 2>&1; then
-        exec su-exec "$MT5_UID:$MT5_GID" wine terminal64.exe /config:startup.ini
+        exec su-exec "$MT5_UID:$MT5_GID" wine terminal64.exe /config:startup.ini /profile:AutoBridge
     elif command -v gosu >/dev/null 2>&1; then
-        exec gosu "$MT5_UID:$MT5_GID" wine terminal64.exe /config:startup.ini
+        exec gosu "$MT5_UID:$MT5_GID" wine terminal64.exe /config:startup.ini /profile:AutoBridge
     elif [ "$(id -u)" = "0" ] && id "$MT5_USER" >/dev/null 2>&1; then
-        exec su -c "wine terminal64.exe /config:startup.ini" "$MT5_USER"
+        exec su -c "wine terminal64.exe /config:startup.ini /profile:AutoBridge" "$MT5_USER"
     else
         # Already running as correct user
-        exec wine terminal64.exe /config:startup.ini
+        exec wine terminal64.exe /config:startup.ini /profile:AutoBridge
     fi
 }
 

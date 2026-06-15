@@ -329,7 +329,7 @@ deploy_container() {
 Login=0
 LastLogin=0
 Server=
-ProfileLast=Default
+ProfileLast=AutoBridge
 ' > '$MT5_DATA/terminal.ini'
     "
 
