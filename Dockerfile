@@ -22,6 +22,15 @@ RUN apk add --no-cache xvfb && \
     sleep 2 && \
     DISPLAY=:99 WINEPREFIX=/config/.wine wineboot --init && \
     DISPLAY=:99 WINEPREFIX=/config/.wine wine /tmp/mt5setup.exe /auto || true && \
+    for i in $(seq 1 150); do \
+        if [ -f "/config/.wine/drive_c/Program Files/MetaTrader 5/terminal64.exe" ]; then \
+            echo "MetaTrader 5 installed successfully!" && \
+            sleep 10 && \
+            break; \
+        fi; \
+        sleep 2; \
+    done && \
+    WINEPREFIX=/config/.wine wineserver -k && \
     kill $PID && \
     rm /tmp/mt5setup.exe && \
     apk del xvfb

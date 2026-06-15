@@ -410,6 +410,12 @@ do_deploy() {
                 "
         fi
 
+        # Create docker network if it doesn't exist
+        if ! docker network ls --format '{{.Name}}' | grep -q "^mt5-network$"; then
+            log_info "Creating docker network: mt5-network"
+            docker network create mt5-network >/dev/null 2>&1 || true
+        fi
+
         touch "$config_dir/.initialized-from-snapshot"
 
         # Fix ownership BEFORE container starts (use kasm-user 1000:1002)
