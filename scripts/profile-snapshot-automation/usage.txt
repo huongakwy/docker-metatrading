@@ -34,3 +34,4 @@
 
 # Ví dụ deploy nhiều accounts:
 ./scripts/profile-snapshot-automation/deploy-and-switch.sh --accounts credentials_test.csv --reference mt5_01 --stagger 15
+

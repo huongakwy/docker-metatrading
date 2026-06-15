@@ -356,19 +356,6 @@ do_deploy() {
             echo \"MT5 logs cleaned successfully\"
         "
 
-        # Fix ownership BEFORE container starts (use kasm-user 1000:1002)
-        log_info "Fixing ownership for $config_dir to kasm-user (1000:1002)..."
-        docker run --rm -v "$config_dir:/data" alpine sh -c "
-            chown -R 1000:1002 /data
-            find /data -type d -exec chmod 755 {} \;
-            find /data -type f -exec chmod 644 {} \;
-            # Ensure Terminal directories are writable
-            find /data -type d -name 'Terminal' -exec chmod 755 {} \;
-            # Ensure Wine user directories are writable
-            find /data/.wine/drive_c/users -type d -exec chmod 755 {} \; 2>/dev/null || true
-            find /data/.wine/drive_c/users -type f -exec chmod 644 {} \; 2>/dev/null || true
-        "
-
         # ALWAYS update Wine Terminal data with correct account info from credentials volume
         # This ensures each container uses its own account, not the reference account
         log_info "Updating Wine Terminal data with correct account credentials..."
@@ -410,10 +397,6 @@ do_deploy() {
                     # Generate startup.ini for auto-login
                     printf '[Common]\nLogin=%s\nPassword=%s\nServer=%s\n' \"\$LOGIN\" \"\$PASSWORD\" \"\$SERVER\" > /config/startup.ini
                     echo \"Generated startup.ini for auto-login\"
-                    
-                    # Fix ownership
-                    chown -R 1000:1002 \"\$MT5_USER_DIR\" 2>/dev/null || true
-                    echo \"Ownership fixed\"
                 "
         else
             log_warning "No credentials found at $PROJECT_DIR/configs/$VOLUME_PREFIX-$account_id/credentials/terminal.ini"
@@ -427,6 +410,16 @@ do_deploy() {
         fi
 
         touch "$config_dir/.initialized-from-snapshot"
+
+        # Fix ownership BEFORE container starts (use kasm-user 1000:1002)
+        # MUST run after all files (startup.ini, credentials, templates, etc.) are written
+        log_info "Fixing ownership for $config_dir to kasm-user (1000:1002)..."
+        docker run --rm -v "$config_dir:/data" alpine sh -c "
+            chown -R 1000:1002 /data
+            find /data -type d -exec chmod 755 {} +
+            find /data -type f -exec chmod 644 {} +
+        "
+
         
         log_info "Deploying container: mt5_${account_id}"
         log_info "  Ports: VNC=$vnc_port, RPC=$rpc_port, Bridge=$bridge_port"

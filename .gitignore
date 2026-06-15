@@ -58,3 +58,5 @@ System Volume Information/
 .tmp/
 /tmp/
 /unpacking
+    
+.claude/

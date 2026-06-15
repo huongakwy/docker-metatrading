@@ -309,14 +309,6 @@ deploy_container() {
         rm -rf /config/.wine/drive_c/users/abc/Temp/* 2>/dev/null || true
     "
 
-    # Fix ownership
-    log_info "Fixing ownership to kasm-user (1000:1002)..."
-    docker run --rm -v "$config_dir:/data" alpine sh -c "
-        chown -R 1000:1002 /data
-        find /data -type d -exec chmod 755 {} \;
-        find /data -type f -exec chmod 644 {} \;
-    "
-
     # Get terminal ID for this container
     local container_terminal_id=""
     if [ -n "$TERMINAL_ID" ]; then
@@ -340,6 +332,15 @@ Server=
 ProfileLast=Default
 ' > '$MT5_DATA/terminal.ini'
     "
+
+    # Fix ownership of all files (including the newly created terminal.ini and directories)
+    log_info "Fixing ownership to kasm-user (1000:1002)..."
+    docker run --rm -v "$config_dir:/data" alpine sh -c "
+        chown -R 1000:1002 /data
+        find /data -type d -exec chmod 755 {} +
+        find /data -type f -exec chmod 644 {} +
+    "
+
 
     # Create credential volume
     if ! docker volume ls --format '{{.Name}}' | grep -q "^${volume_name}$"; then
