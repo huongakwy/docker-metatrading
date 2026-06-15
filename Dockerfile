@@ -15,10 +15,16 @@ RUN (groupdel abc 2>/dev/null || true) && \
     (groupmod -g 1002 kasm-user 2>/dev/null || groupadd -g 1002 kasm-user) && \
     (usermod -u 1000 -g 1002 kasm-user 2>/dev/null || useradd -u 1000 -g 1002 -G audio,video -m -s /bin/bash kasm-user)
 
-# Setup Wine prefix and install MetaTrader 5 silently
-RUN WINEPREFIX=/config/.wine wineboot --init && \
-    WINEPREFIX=/config/.wine wine /tmp/mt5setup.exe /auto && \
-    rm /tmp/mt5setup.exe
+# Setup Wine prefix and install MetaTrader 5 silently using a virtual framebuffer
+RUN apk add --no-cache xvfb && \
+    Xvfb :99 -ac -screen 0 1024x768x16 & \
+    PID=$! && \
+    sleep 2 && \
+    DISPLAY=:99 WINEPREFIX=/config/.wine wineboot --init && \
+    DISPLAY=:99 WINEPREFIX=/config/.wine wine /tmp/mt5setup.exe /auto || true && \
+    kill $PID && \
+    rm /tmp/mt5setup.exe && \
+    apk del xvfb
 
 # Backup the pre-installed Wine prefix so it can be restored if /config is overridden by a host mount
 RUN cp -a /config/.wine /opt/mt5-wine \
