@@ -30,6 +30,22 @@ RUN apk add --no-cache xvfb && \
 RUN cp -a /config/.wine /opt/mt5-wine \
     && chown -R 1000:1002 /opt/mt5-wine
 
+# Copy MQL5 folders and templates to base template directory
+RUN mkdir -p /opt/mt5-base-terminal
+COPY MQL5/ /opt/mt5-base-terminal/MQL5/
+COPY snapshot/Terminal/ /opt/mt5-base-terminal/Terminal/
+COPY snapshot/Config/ /opt/mt5-base-terminal/Config/
+COPY snapshot/Profiles/ /opt/mt5-base-terminal/Profiles/
+COPY snapshot/profiles/ /opt/mt5-base-terminal/profiles/
+RUN chown -R 1000:1002 /opt/mt5-base-terminal \
+    && find /opt/mt5-base-terminal -type d -exec chmod 755 {} \; \
+    && find /opt/mt5-base-terminal -type f -exec chmod 644 {} \;
+
+# Copy custom start.sh to /Metatrader/ (overwrites base start.sh)
+COPY scripts/profile-snapshot-automation/start.sh /Metatrader/start.sh
+RUN chmod +x /Metatrader/start.sh \
+    && chown 1000:1002 /Metatrader/start.sh
+
 # Environment variables for MT5 startup
 ENV MT5_CMD_OPTIONS="/config:/config/startup.ini"
 

@@ -127,13 +127,17 @@ init_terminal_directory() {
     cp -a "$BASE_TERMINAL_PATH/Terminal/." "$active_terminal_path/"
 
     if [ -d "$BASE_TERMINAL_PATH/MQL5" ]; then
-        log_info "Copying MQL5 files to $MT5_INSTALL_PATH/MQL5"
+        log_info "Copying MQL5 files to active terminal path $active_terminal_path/MQL5"
+        mkdir -p "$active_terminal_path/MQL5"
+        cp -a "$BASE_TERMINAL_PATH/MQL5/." "$active_terminal_path/MQL5/" 2>/dev/null || true
+        
+        log_info "Copying MQL5 files to install path $MT5_INSTALL_PATH/MQL5"
         mkdir -p "$MT5_INSTALL_PATH/MQL5"
         cp -a "$BASE_TERMINAL_PATH/MQL5/." "$MT5_INSTALL_PATH/MQL5/" 2>/dev/null || true
         
-        # Log MQL5/Profiles status (required for attach-ea.sh)
-        if [ -d "$MT5_INSTALL_PATH/MQL5/Profiles/Charts" ]; then
-            local profiles=$(ls -d "$MT5_INSTALL_PATH/MQL5/Profiles/Charts"/*/ 2>/dev/null | xargs -n1 basename | tr '\n' ', ' | sed 's/,$//')
+        # Log MQL5/Profiles status
+        if [ -d "$active_terminal_path/MQL5/Profiles/Charts" ]; then
+            local profiles=$(ls -d "$active_terminal_path/MQL5/Profiles/Charts"/*/ 2>/dev/null | xargs -n1 basename | tr '\n' ', ' | sed 's/,$//')
             log_success "MQL5/Profiles copied. Available profiles: $profiles"
         fi
     fi
@@ -145,9 +149,23 @@ init_terminal_directory() {
     fi
 
     if [ -d "$BASE_TERMINAL_PATH/Config" ]; then
-        log_info "Copying Config files to $MT5_INSTALL_PATH/Config"
+        log_info "Copying Config files to active terminal path $active_terminal_path/Config"
+        mkdir -p "$active_terminal_path/Config"
+        cp -a "$BASE_TERMINAL_PATH/Config/." "$active_terminal_path/Config/" 2>/dev/null || true
+        
+        log_info "Copying Config files to install path $MT5_INSTALL_PATH/Config"
         mkdir -p "$MT5_INSTALL_PATH/Config"
         cp -a "$BASE_TERMINAL_PATH/Config/." "$MT5_INSTALL_PATH/Config/" 2>/dev/null || true
+    fi
+
+    if [ -d "$BASE_TERMINAL_PATH/Profiles" ]; then
+        log_info "Copying Profiles (Templates) to active terminal path $active_terminal_path/Profiles"
+        mkdir -p "$active_terminal_path/Profiles"
+        cp -a "$BASE_TERMINAL_PATH/Profiles/." "$active_terminal_path/Profiles/" 2>/dev/null || true
+        
+        log_info "Copying Profiles (Templates) to install path $MT5_INSTALL_PATH/Profiles"
+        mkdir -p "$MT5_INSTALL_PATH/Profiles"
+        cp -a "$BASE_TERMINAL_PATH/Profiles/." "$MT5_INSTALL_PATH/Profiles/" 2>/dev/null || true
     fi
 
     log_success "Base template copied successfully"
