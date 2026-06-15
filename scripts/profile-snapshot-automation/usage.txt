@@ -1,0 +1,36 @@
+# Extract snapshot từ reference container
+./profile-snapshot-orchestrator.sh extract --reference account_01
+
+# Build base image
+./profile-snapshot-orchestrator.sh build
+
+# Tạo volumes cho accounts
+./profile-snapshot-automation/create-credential-volume.sh create account01 111222 password Exness-MT5Trial14
+
+# Full pipeline
+./profile-snapshot-orchestrator.sh full --reference mt5_01 --accounts credentials.csv
+
+./scripts/profile-snapshot-automation/profile-snapshot-orchestrator.sh full --reference mt5_01 --accounts credentials.csv
+
+#deploy
+./scripts/profile-snapshot-automation/profile-snapshot-orchestrator.sh deploy   --accounts credentials.csv
+ 
+
+# switch account
+./scripts/switch-account.sh mt5_04 04
+
+# Deploy and Switch (combined - deploy container + auto login correct account)
+./scripts/profile-snapshot-automation/deploy-and-switch.sh --accounts credentials.csv --reference mt5_01
+
+# Args:
+#   --accounts <file.csv>   : CSV file chứa account info (instance_name, login, password, server)
+#   --reference <name>      : Tên container reference để lấy metadata (image, terminal_id)
+#   --stagger <seconds>     : Delay giữa mỗi container deploy (default: 10s)
+
+# CSV format:
+# instance_name,mt5_login,mt5_password,mt5_server
+# 02,413894078,Hoainam0303@,Exness-MT5Trial6
+# 03,433755587,Hoainam0303@,Exness-MT5Trial7
+
+# Ví dụ deploy nhiều accounts:
+./scripts/profile-snapshot-automation/deploy-and-switch.sh --accounts credentials_test.csv --reference mt5_01 --stagger 15

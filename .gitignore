@@ -1,0 +1,60 @@
+# Logs and runtime data
+/logs/
+*.log
+
+# Environment variables
+.env
+.env.local
+.env.production
+.env.development
+
+# Credentials and sensitive information
+/credentials.csv
+/credentials_test.csv
+/credentials/
+
+# Configuration and Wine directories (HEAVY - ignore everywhere)
+configs/
+**/.wine/
+.wine/
+wineprefix/
+.local/
+.config/
+
+# Snapshots and backups (HEAVY - ignore everywhere)
+snapshot/
+snapshot-debug/
+snapshot-test/
+snapshots/
+*.tar
+*.tar.gz
+*.zip
+*.7z
+
+# Executables and installers (HEAVY)
+/mt5setup.exe
+
+# Dependencies and caches
+node_modules/
+__pycache__/
+*.pyc
+.venv/
+venv/
+.cache/
+.dbus/
+
+# IDE and OS files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+$RECYCLE.BIN/
+System Volume Information/
+
+# Temporary files and scripts
+.tmp/
+/tmp/
+/unpacking

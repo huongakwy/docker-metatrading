@@ -1,0 +1,15 @@
+# MT5 Docker Cluster - docker-compose.yml
+#
+# Usage:
+#   Scale:           ./scripts/scale.sh <count>
+#   View  status:     docker compose ps
+#   View logs:       docker compose logs -f
+#   Stop:            ./scripts/stop-cluster.sh
+
+services:
+  # Services will be generated dynamically by scale.sh
+  # See scripts/scale.sh for scaling management
+
+networks:
+  mt5-network:
+    driver: bridge

@@ -1,0 +1,134 @@
+#!/bin/bash
+# start.sh - Custom startup script for MT5 container
+# Uses credentials from /config/credentials volume instead of env vars
+# Creates portable.ini for MT5 auto-login
+
+set -e
+
+# Configuration
+MT5_INSTALL_PATH="/config/.wine/drive_c/Program Files/MetaTrader 5"
+MT5_EXE="$MT5_INSTALL_PATH/terminal64.exe"
+CREDENTIALS_PATH="/config/credentials"
+WINEPREFIX="${WINEPREFIX:-/config/.wine}"
+
+# Get MT5 user info
+MT5_UID=$(id -u)
+MT5_GID=$(id -g)
+MT5_USER=$(whoami)
+MT5_WINE_USER_ROOT="$WINEPREFIX/drive_c/users/$MT5_USER"
+
+# Colors
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+NC='\033[0m'
+
+log_info() { echo -e "${BLUE}[INFO]${NC} $1"; }
+log_success() { echo -e "${GREEN}[SUCCESS]${NC} $1"; }
+log_warning() { echo -e "${YELLOW}[WARNING]${NC} $1"; }
+log_error() { echo -e "${RED}[ERROR]${NC} $1"; }
+
+# Create portable.txt to enable portable mode
+enable_portable_mode() {
+    log_info "Enabling MT5 portable mode..."
+    
+    # Create portable.txt (empty file enables portable mode)
+    touch "$MT5_INSTALL_PATH/portable.txt"
+    
+    # Create portable.ini with credentials from volume
+    if [ -f "$CREDENTIALS_PATH/terminal.ini" ]; then
+        local login=$(grep "^Login=" "$CREDENTIALS_PATH/terminal.ini" 2>/dev/null | cut -d= -f2)
+        local password=$(grep "^Password=" "$CREDENTIALS_PATH/terminal.ini" 2>/dev/null | cut -d= -f2)
+        local server=$(grep "^Server=" "$CREDENTIALS_PATH/terminal.ini" 2>/dev/null | cut -d= -f2)
+        
+        if [ -n "$login" ] && [ -n "$password" ] && [ -n "$server" ]; then
+            log_info "Creating portable.ini with credentials for account: $login"
+            cat > "$MT5_INSTALL_PATH/portable.ini" << EOF
+[Common]
+Login=$login
+Password=$password
+Server=$server
+EOF
+            log_success "portable.ini created"
+        else
+            log_warning "Credentials incomplete in terminal.ini, portable.ini not created"
+        fi
+    else
+        log_warning "No credentials found at $CREDENTIALS_PATH/terminal.ini"
+    fi
+}
+
+# Clear Wine registry cache for MT5
+clear_wine_registry() {
+    log_info "Clearing Wine Registry cache for MT5..."
+    
+    if [ -f "$WINEPREFIX/user.reg" ]; then
+        sed -i '/\[Software\\\\MetaQuotes\\\\Terminal/d' "$WINEPREFIX/user.reg" 2>/dev/null || true
+        sed -i '/\[Software\\\\MetaQuotes Software/d' "$WINEPREFIX/user.reg" 2>/dev/null || true
+    fi
+    
+    if [ -f "$WINEPREFIX/system.reg" ]; then
+        sed -i '/\[Software\\\\MetaQuotes\\\\Terminal/d' "$WINEPREFIX/system.reg" 2>/dev/null || true
+        sed -i '/\[Software\\\\MetaQuotes Software/d' "$WINEPREFIX/system.reg" 2>/dev/null || true
+    fi
+    
+    log_success "Wine Registry cache cleared"
+}
+
+# Main
+main() {
+    echo ""
+    echo "=========================================="
+    echo "  MT5 Container Startup"
+    echo "  Using credentials from volume"
+    echo "=========================================="
+    echo ""
+    
+    log_info "User: $MT5_USER (UID: $MT5_UID, GID: $MT5_GID)"
+    log_info "Wine Prefix: $WINEPREFIX"
+    log_info "MT5 Install: $MT5_INSTALL_PATH"
+    log_info "Credentials: $CREDENTIALS_PATH"
+    echo ""
+    
+    # Check if MT5 is installed
+    if [ ! -f "$MT5_EXE" ]; then
+        log_error "MT5 not found at $MT5_EXE"
+        log_error "Please ensure MT5 is installed in the Wine prefix"
+        exit 1
+    fi
+    
+    # Enable portable mode with credentials
+    enable_portable_mode
+    echo ""
+    
+    # Clear Wine registry cache
+    clear_wine_registry
+    echo ""
+    
+    # Fix permissions
+    log_info "Fixing permissions..."
+    chown -R "$MT5_UID:$MT5_GID" "$MT5_WINE_USER_ROOT" 2>/dev/null || true
+    log_success "Permissions fixed"
+    echo ""
+    
+    # Launch MT5 in portable mode
+    log_info "Starting MetaTrader 5 in portable mode..."
+    log_info "Executable: $MT5_EXE"
+    echo ""
+    
+    cd "$MT5_INSTALL_PATH"
+    
+    # Launch without /login:/password:/server args - MT5 will read from portable.ini
+    if command -v su-exec >/dev/null 2>&1; then
+        exec su-exec "$MT5_UID:$MT5_GID" wine terminal64.exe
+    elif command -v gosu >/dev/null 2>&1; then
+        exec gosu "$MT5_UID:$MT5_GID" wine terminal64.exe
+    elif [ "$(id -u)" = "0" ] && id "$MT5_USER" >/dev/null 2>&1; then
+        exec su -c "wine terminal64.exe" "$MT5_USER"
+    else
+        exec wine terminal64.exe
+    fi
+}
+
+main "$@"
