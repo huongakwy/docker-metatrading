@@ -99,16 +99,22 @@ init_terminal_directory() {
 
     mkdir -p "$terminal_root"
 
-    # Always delete and recreate to ensure fresh state
+    # Check if base template exists
+    if [ ! -d "$BASE_TERMINAL_PATH" ]; then
+        if [ -d "$active_terminal_path" ]; then
+            log_warning "Base terminal template not found at $BASE_TERMINAL_PATH, but active terminal path already exists. Skipping template copy."
+            return 0
+        else
+            log_error "Base terminal template not found at $BASE_TERMINAL_PATH and active terminal path does not exist."
+            return 1
+        fi
+    fi
+
+    # Always delete and recreate to ensure fresh state if template is present
     # This prevents stale credentials from being reused
     if [ -d "$active_terminal_path" ]; then
         log_info "Removing existing terminal directory for fresh init..."
         rm -rf "$active_terminal_path"
-    fi
-
-    if [ ! -d "$BASE_TERMINAL_PATH" ]; then
-        log_error "Base terminal template not found at $BASE_TERMINAL_PATH"
-        return 1
     fi
 
     if [ ! -d "$BASE_TERMINAL_PATH/Terminal" ]; then
