@@ -161,7 +161,7 @@ inject_credentials() {
     # Check if credentials volume is mounted
     if [ ! -f "$CREDENTIALS_PATH/terminal.ini" ]; then
         log_warning "No credentials found at $CREDENTIALS_PATH/terminal.ini"
-        return 1
+        return 0
     fi
 
     log_info "Injecting credentials from volume"
