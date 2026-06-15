@@ -20,6 +20,10 @@ RUN WINEPREFIX=/config/.wine wineboot --init && \
     WINEPREFIX=/config/.wine wine /tmp/mt5setup.exe /auto && \
     rm /tmp/mt5setup.exe
 
+# Backup the pre-installed Wine prefix so it can be restored if /config is overridden by a host mount
+RUN cp -a /config/.wine /opt/mt5-wine \
+    && chown -R 1000:1002 /opt/mt5-wine
+
 # Environment variables for MT5 startup
 ENV MT5_CMD_OPTIONS="/config:/config/startup.ini"
 
